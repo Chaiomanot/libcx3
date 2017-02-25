@@ -149,6 +149,7 @@ str_t as_text (rat8_t n, bool_t fmt_wide)
 		snprintf(&buf[i], sizeof(buf) - i, "e%ld", exp_val); // e = \u23E8
 	} else {
 		for (auto exp_val_i : create_range(static_cast<nat8_t>(exp_val))) {
+			unused(exp_val_i);
 			buf[i] = '0';
 			++i;
 		}

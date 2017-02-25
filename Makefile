@@ -4,13 +4,11 @@ CC=clang-3.9
 CXX=clang++-3.9
 CC_FLAGS=
 CXX_FLAGS=-ferror-limit=5 -std=c++1z -fno-rtti -fno-exceptions \
-		  -fno-use-cxa-atexit -fno-threadsafe-statics \
-		  -Weverything -Werror -pedantic \
--Wno-exit-time-destructors \
-		  -Wno-missing-prototypes -Wno-missing-variable-declarations \
-		  -Wno-c++98-compat -Wno-c++98-compat-pedantic \
-		  -Wno-c++98-c++11-c++14-compat \
-		  -g -O1 -Wno-unused-parameter -Wno-unused-variable
+          -fno-use-cxa-atexit -fno-threadsafe-statics \
+          -Weverything -Werror -pedantic \
+          -Wno-exit-time-destructors -Wno-missing-prototypes -Wno-missing-variable-declarations \
+          -Wno-c++98-c++11-c++14-compat -Wno-c++98-compat -Wno-c++98-compat-pedantic \
+          -g -O1
 LD_FLAGS_L=-ldl -lm -lpthread
 LD_FLAGS_W=-L/usr/lib/gcc/x86_64-w64-mingw32/6.2-win32 -mwindows -lgdi32
 

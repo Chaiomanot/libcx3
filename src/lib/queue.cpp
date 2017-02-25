@@ -44,13 +44,16 @@ void_t send (queue_t& q, str_t msg)
 void_t test_queue_thread_entry (queue_t& q)
 {
 	for (auto i : create_range(10)) {
+		unused(i);
 		send(q, "<pineapple>");
 	}
 	for (auto i : create_range(100)) {
+		unused(i);
 		send(q, "<cherry>");
 		recv(q);
 	}
 	for (auto i : create_range(10)) {
+		unused(i);
 		recv(q);
 	}
 }
@@ -61,6 +64,7 @@ define_test(queue, "thread")
 
 	err_t e;
 	for (auto i : create_range(4)) {
+		unused(i);
 		spawn_thread(&test_queue_thread_entry, q, e);
 	}
 	prove_same(as_text(e), "");
