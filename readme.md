@@ -12,9 +12,10 @@ Key features include:
 * Makes use of some bleeding-edge C++ features (C++17).
 * Doesn't use class-polymorphism, exceptions, or RTII.
 * C-style API. Object composition and function overloading is used instead of inheritance and method dispatch.
-* Targets Clang 3.9, with support for Linux and Windows.
+* Includes a unit test framework.
 * Very minimal use of macros (with exception of debug.cpp & debug.hpp).
 * Compiles warning-free (`-Weverything`, with few exceptions).
+* Targets Clang 3.9, with support for Linux and Windows.
 
 libCX3 is experimental, and its design decisions should be understood as such.
 
