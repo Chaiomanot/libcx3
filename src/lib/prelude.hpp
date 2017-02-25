@@ -210,7 +210,9 @@ template<typename el_t> seq_t<el_t> create_seq (const el_t* ptr, nat8_t len)
 
 using str_t = seq_t<nat1_t>;
 
-void_t begin_main (const char* name, int argc, const char** argv);
+struct pipe_t;
+void_t begin_main (const char* name, int argc, const char** argv,
+                   pipe_t* std_in, pipe_t* std_out, pipe_t* std_err);
 void_t end_main ();
 
 #endif

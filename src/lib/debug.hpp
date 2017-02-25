@@ -43,7 +43,12 @@ const char* describe_bug (const char* file, int line, const char* op,
 		fail_assertion(fmt_bug_loc("*", reinterpret_cast<nat8_t>(as_strz(left).ptr), \
 		                                reinterpret_cast<nat8_t>(as_strz(right).ptr), #left, #right)); } laze_stmt()
 
+#ifdef __unix__
 void_t* operator new (unsigned long size, void_t* ptr);
+#endif
+#ifdef _WIN32
+void_t* operator new (unsigned long long size, void_t* ptr);
+#endif
 
 template<typename new_t> void_t assert_init_zero ()
 {

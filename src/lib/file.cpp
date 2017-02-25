@@ -154,7 +154,7 @@ path_t get_working_dir (err_t& err)
 		err = decode_os_err(GetLastError());
 		return {};
 	}
-	auto buf = seq<WCHAR>(len);
+	auto buf = create_seq<WCHAR>(len);
 	if (GetCurrentDirectory(len, buf.ptr) > 0) {
 		return create_path(create_str(buf.ptr));
 	}
@@ -417,7 +417,7 @@ void_t set_cursor (file_t& file, nat8_t at, err_t& err)
 	assert_lteq(at, max<LONGLONG>());
 	LARGE_INTEGER win_at = {};
 	win_at.QuadPart = static_cast<LONGLONG>(at);
-	if (SetFilePointerEx(handle(file.h), win_at, NULL, FILE_BEGIN)) { return; }
+	if (SetFilePointerEx(get_handle(file.opaq), win_at, NULL, FILE_BEGIN)) { return; }
 	err = decode_os_err(GetLastError());
 	#endif
 }
@@ -425,16 +425,18 @@ void_t set_cursor (file_t& file, nat8_t at, err_t& err)
 date_t read_last_mod (file_t& file, err_t& err)
 {
 	#ifdef __unix__
-	date_t as_date (const timespec& ts);
+	date_t create_date (const timespec& ts);
 
-	if (struct stat st = {}; fstat(get_fd(file.opaq), &st) == 0) { return as_date(st.st_mtim); }
+	if (struct stat st = {}; fstat(get_fd(file.opaq), &st) == 0) { return create_date(st.st_mtim); }
 
 	err = decode_os_err(errno);
 	return {};
 	#endif
 
 	#ifdef _WIN32
-	if (FILETIME ft = {}; GetFileTime(get_handle(file.opaq), NULL, NULL, &ft)) { return as_date(fn); }
+	date_t create_date (const FILETIME& file);
+
+	if (FILETIME ft = {}; GetFileTime(get_handle(file.opaq), NULL, NULL, &ft)) { return create_date(ft); }
 
 	err = decode_os_err(GetLastError());
 	return {};
@@ -454,7 +456,9 @@ void_t write_last_mod (file_t& file, const date_t& date, err_t& err)
 	#endif
 
 	#ifdef _WIN32
-	if (FILETIME fn = as_filetime(date); SetFileTime(create_handle(file.opaq), NULL, NULL, &fn)) { return; }
+	FILETIME as_filetime (date_t date);
+
+	if (FILETIME fn = as_filetime(date); SetFileTime(get_handle(file.opaq), NULL, NULL, &fn)) { return; }
 
 	err = decode_os_err(GetLastError());
 	#endif

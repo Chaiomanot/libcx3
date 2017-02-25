@@ -122,7 +122,12 @@ void_t echo_debug (const char* head, const char* body, const char* color)
 
 #ifndef NDEBUG
 
+#ifdef __unix__
 void_t* operator new (unsigned long size, void_t* ptr) { return ptr; }
+#endif
+#ifdef _WIN32
+void_t* operator new (unsigned long long size, void_t* ptr) { return ptr; }
+#endif
 
 [[noreturn]] void_t fail_assertion (const char* msg)
 {

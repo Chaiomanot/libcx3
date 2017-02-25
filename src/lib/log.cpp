@@ -43,9 +43,8 @@ void_t log (log_sev_t sev, str_t& msg)
 	#endif
 
 	#ifdef _WIN32
-	LPCTSTR strs[2] = {wstr(msg).ptr, NULL};
-	const auto succ = ReportEvent(ev_src, win(sev), 0, 0,
-									NULL, 1, 0, strs, NULL);
+	LPCTSTR strs[2] = {as_wstr(msg).ptr, NULL};
+	const auto succ = ReportEvent(ev_src, win(sev), 0, 0, NULL, 1, 0, strs, NULL);
 	assert_true(succ);
 	unused(succ);
 	#endif
@@ -58,7 +57,7 @@ void_t log_open (const char* prog_name)
 	#endif
 
 	#ifdef _WIN32
-	ev_src = RegisterEventSource(NULL, wstr(prog_name).ptr);
+	ev_src = RegisterEventSource(NULL, as_wstr(prog_name).ptr);
 	assert_true(ev_src);
 	#endif
 }

@@ -64,8 +64,7 @@ void_t* sym (lib_t& lib, const str_t& sym_name, err_t& err)
 	#endif
 
 	#ifdef _WIN32
-	if (FARPROC sym = GetProcAddress(reinterpret_cast<HMODULE>(lib.h),
-										strz(sym_name).ptr)) {
+	if (FARPROC sym = GetProcAddress(reinterpret_cast<HMODULE>(lib.h), as_strz(sym_name).ptr)) {
 		return reinterpret_cast<void_t*>(sym);
 	} else {
 		err = decode_os_err(GetLastError());

@@ -21,7 +21,7 @@ str_t env_var (const str_t& key)
 	#ifdef _WIN32
 	WCHAR buf[32'767] = {};
 	if (GetEnvironmentVariable(as_wstr(key).ptr, buf, sizeof(buf)) > 0) {
-		return str(buf);
+		return create_str(buf);
 	} else {
 		assert_eq(GetLastError(), ERROR_ENVVAR_NOT_FOUND);
 		return {};
@@ -73,7 +73,7 @@ void_t run_program (const seq_t<str_t>& args, err_t& err)
 				prev_bs = (g == '\\' ? prev_bs + 1 : 0);
 			}
 		}
-		cmd = str(i);
+		cmd = create_str(i);
 	}
 	nat8_t i = 0;
 	for (const auto& arg : args) {
@@ -95,15 +95,13 @@ void_t run_program (const seq_t<str_t>& args, err_t& err)
 	STARTUPINFO start_info = {};
 	start_info.cb = sizeof(start_info);
 	PROCESS_INFORMATION proc_info = {};
-	if (CreateProcess(as_wstr(args[0]).ptr, as_wstr(cmd).ptr, NULL, NULL, FALSE,
-							0, NULL, NULL, &start_info, &proc_info)) {
-	} else {
-		err = "Couldn't create process" + decode_os_err(GetLastError());
+	if (!CreateProcess(as_wstr(args[0]).ptr, as_wstr(cmd).ptr, NULL, NULL, FALSE,
+	                   0, NULL, NULL, &start_info, &proc_info)) {
+		err = create_err("Couldn't create process") + decode_os_err(GetLastError());
 		return;
 	}
-	if (WaitForSingleObject(proc_info.hProcess, INFINITE) == WAIT_OBJECT_0) {
-	} else {
-		err = "Error waiting for process to finish" + decode_os_err(GetLastError());
+	if (WaitForSingleObject(proc_info.hProcess, INFINITE) != WAIT_OBJECT_0) {
+		err = create_err("Error waiting for process to finish") + decode_os_err(GetLastError());
 	}
 	CloseHandle(proc_info.hProcess);
 	CloseHandle(proc_info.hThread);

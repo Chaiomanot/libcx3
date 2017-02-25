@@ -1,9 +1,9 @@
 #include "text.hpp"
 #include "raw.hpp"
 #include "pipe.hpp"
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -104,7 +104,7 @@ str_t as_text (rat8_t n, bool_t fmt_wide)
 		if (buf[i] == '#') {
 			if (buf[i + 1] == 'I') { return "inf"; }
 			if (buf[i + 1] == 'Q' || buf[i + 1] == 'S' || buf[i + 1] == 'N') { return "nan"; }
-			assert_same(str(buf), "");
+			assert_same(create_str(buf), "");
 		}
 		#endif
 		if (buf[0] == '-') {
@@ -187,22 +187,34 @@ str_t as_text (rat4_t n)
 	return as_text(static_cast<rat8_t>(n), false);
 }
 
-nat8_t decode_nat (const str_t& str, nat8_t& i)
+nat8_t decode_nat (const str_t& str, nat8_t* i)
 {
-	if (i >= str.len) { return 0; }
+	if (!i) {
+		nat8_t dummy_i = 0;
+		return decode_nat(str, &dummy_i);
+	}
+	if (*i >= str.len) { return 0; }
 
 	auto buf = as_strz(str);
 	char* end_ptr = nullptr;
-	nat8_t val = strtoul(&buf[i], &end_ptr, 0);
-	i = static_cast<nat8_t>(static_cast<decltype(buf.ptr)>(end_ptr) - buf.ptr);
+	nat8_t val = strtoul(&buf[*i], &end_ptr, 0);
+	*i = static_cast<nat8_t>(static_cast<decltype(buf.ptr)>(end_ptr) - buf.ptr);
 	return val;
 }
 
-rat8_t decode_rat (const str_t& str, nat8_t& i)
+rat8_t decode_rat (const str_t& str, nat8_t* i)
 {
-	unused(str); // TODO
-	unused(i);
-	return {};
+	if (!i) {
+		nat8_t dummy_i = 0;
+		return decode_rat(str, &dummy_i);
+	}
+	if (*i >= str.len) { return 0; }
+
+	auto buf = as_strz(str);
+	char* end_ptr = nullptr;
+	rat8_t val = strtod(&buf[*i], &end_ptr);
+	*i = static_cast<nat8_t>(static_cast<decltype(buf.ptr)>(end_ptr) - buf.ptr);
+	return val;
 }
 
 str_t create_str (const char* src)
@@ -225,11 +237,11 @@ str_t create_str (const wchar_t* wstr)
 	const auto wstr_len = wcslen(wstr);
 	if (!wstr_len) { return {}; }
 
-	assert_lt(wstr_len, max<nat4_t> / 2);
+	assert_lt(wstr_len, max<nat4_t>() / 2);
 	auto str_len = WideCharToMultiByte(CP_UTF8, 0, wstr, static_cast<int>(wstr_len), NULL, 0, NULL, NULL);
 	if (str_len <= 0) { return {}; }
 
-	auto str = mk_str(static_cast<nat8_t>(str_len));
+	auto str = create_str(static_cast<nat8_t>(str_len));
 	auto tr_len = WideCharToMultiByte(CP_UTF8, 0, wstr, static_cast<int>(wstr_len),
 	                                  reinterpret_cast<char*>(str.ptr), str_len, NULL, NULL);
 	if (tr_len <= 0) { return {}; }
@@ -237,11 +249,11 @@ str_t create_str (const wchar_t* wstr)
 	return str;
 }
 
-seq_t<wchar_t> create_wstr (const str_t& str)
+seq_t<wchar_t> as_wstr (const str_t& str)
 {
 	if (!str) { return {}; }
 
-	assert_lt(str.len, max<nat4_t> / 2);
+	assert_lt(str.len, max<nat4_t>() / 2);
 	auto wstr_len = MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(str.ptr),
 	                                    static_cast<int>(str.len), NULL, 0);
 	if (wstr_len <= 0) { return {}; }
@@ -264,21 +276,6 @@ str_t get_line_sep ()
 	#ifdef _WIN32
 	return "\r\n";
 	#endif
-}
-
-void_t print (const str_t& text, err_t& err)
-{
-	pipe_t p;
-	#ifdef __unix__
-	opaque_t create_opaque_fd (int fd);
-	p.h_out = create_opaque_fd(1);
-	#endif
-	#ifdef _WIN32
-	opaque_t create_opaque_handle (HANDLE h);
-	p.h_out = create_opaque_handle(GetStdHandle(STD_OUTPUT_HANDLE));
-	#endif
-	send(p, text, err); // TODO try again
-	p.h_out = {};
 }
 
 define_test(text, "")
@@ -331,8 +328,14 @@ define_test(text, "")
 	prove_same(as_text( 0.0 / 0.0), "nan");
 	prove_same(as_text(-0.0 / 0.0), "nan");
 
+	prove_eq(decode_nat("12345", nullptr), 12345);
+	{ auto v = decode_rat("-8008.135", nullptr);
+		prove_gteq(v, -8008.135 - 0.00001);
+		prove_lteq(v, -8008.135 + 0.00001);
+	}
+
 	#ifdef _WIN32
-	{ auto s = wstr("Hello");
+	{ auto s = as_wstr("Hello");
 		assert_eq(s.len, 6);
 		assert_eq(s[0], 'H');
 		assert_eq(s[4], 'o');

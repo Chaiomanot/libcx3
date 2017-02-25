@@ -1,8 +1,12 @@
 #include "prelude.hpp"
 #include "text.hpp"
 #include "thread.hpp"
-#include <cstdlib>
-#include <cstdio>
+#include "pipe.hpp"
+#include <stdlib.h>
+#include <stdio.h>
+#ifdef __unix__
+#include <unistd.h>
+#endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -79,7 +83,8 @@ const char** args_ptr;
 
 const char* get_program_name () { return prog_name ? prog_name : ""; }
 
-void_t begin_main (const char* name, int argc, const char** argv)
+void_t begin_main (const char* name, int argc, const char** argv,
+                   pipe_t* std_in, pipe_t* std_out, pipe_t* std_err)
 {
 	assert_gt(argc, 0);
 	prog_name = name;
@@ -93,6 +98,31 @@ void_t begin_main (const char* name, int argc, const char** argv)
 
 	void_t log_open (const char* prog_name);
 	log_open(prog_name);
+	
+	if (std_in) {
+		#ifdef __unix__
+		std_in->h_in = create_opaque_fd(STDIN_FILENO);
+		#endif
+		#ifdef _WIN32
+		std_in->h_in = create_opaque_handle(GetStdHandle(STD_OUTPUT_HANDLE));
+		#endif
+	}
+	if (std_out) {
+		#ifdef __unix__
+		std_out->h_out = create_opaque_fd(STDOUT_FILENO);
+		#endif
+		#ifdef _WIN32
+		std_out->h_out = create_opaque_handle(GetStdHandle(STD_OUTPUT_HANDLE));
+		#endif
+	}
+	if (std_err) {
+		#ifdef __unix__
+		std_err->h_out = create_opaque_fd(STDERR_FILENO);
+		#endif
+		#ifdef _WIN32
+		std_err->h_out = create_opaque_handle(GetStdHandle(STD_OUTPUT_HANDLE));
+		#endif
+	}
 }
 
 void_t end_main ()

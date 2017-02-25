@@ -166,7 +166,7 @@ nat8_t as_unix_time (date_t date)
 }
 
 #ifdef __unix__
-inter_t as_inter (const timespec& ts)
+inter_t create_inter (const timespec& ts)
 {
 	assert_gteq(ts.tv_nsec, 0);
 	if (ts.tv_sec < 0) { return {}; }
@@ -175,9 +175,9 @@ inter_t as_inter (const timespec& ts)
 	       create_inter_of_nanosecs(static_cast<nat8_t>(ts.tv_nsec));
 }
 
-date_t as_date (const timespec& ts)
+date_t create_date (const timespec& ts)
 {
-	return unix_epoch + as_inter(ts);
+	return unix_epoch + create_inter(ts);
 }
 
 timespec as_timespec (inter_t inter)
@@ -207,16 +207,16 @@ timespec create_omission_timespec ()
 #endif
 
 #ifdef _WIN32
-inter_t as_inter (const FILETIME& file)
+inter_t create_inter (const FILETIME& file)
 {
 	ULARGE_INTEGER large;
 	large.LowPart  = file.dwLowDateTime;
 	large.HighPart = file.dwHighDateTime;
-	if (large.QuadPart >= max<LONGLONG>()) { return max<LONGLONG>(); }
+	if (large.QuadPart >= max<LONGLONG>()) { large.QuadPart = max<LONGLONG>(); }
 	return create_inter_of_clunks(large.QuadPart);
 }
 
-date_t as_date (const FILETIME& file)
+date_t create_date (const FILETIME& file)
 {
 	return win_epoch + create_inter(file);
 }
@@ -236,7 +236,7 @@ FILETIME as_filetime (date_t date)
 {
 	if (date < win_epoch) { return {}; }
 
-	return create_filetime(date - win_epoch);
+	return as_filetime(date - win_epoch);
 }
 #endif
 
@@ -252,7 +252,7 @@ inter_t get_current_inter ()
 	auto stat = clock_gettime(clock, &ts);
 	assert_eq(stat, 0);
 	unused(stat);
-	return as_inter(ts);
+	return create_inter(ts);
 	#endif
 
 	#ifdef _WIN32
@@ -270,7 +270,7 @@ date_t get_current_date ()
 	auto stat = clock_gettime(CLOCK_REALTIME, &ts);
 	assert_eq(stat, 0);
 	unused(stat);
-	return as_date(ts);
+	return create_date(ts);
 	#endif
 
 	#ifdef _WIN32
@@ -280,7 +280,7 @@ date_t get_current_date ()
 	auto succ = SystemTimeToFileTime(&sys, &file);
 	assert_true(succ);
 	unused(succ);
-	return as_date(file);
+	return create_date(file);
 	#endif
 }
 
@@ -368,7 +368,7 @@ metronome_t metronome_create (err_t& err)
 		met.opaq = create_opaque_handle(handle);
 		return met;
 	} else {
-		err = tr_os_err(GetLastError());
+		err = decode_os_err(GetLastError());
 		return {};
 	}
 	#endif

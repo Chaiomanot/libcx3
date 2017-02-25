@@ -71,7 +71,7 @@ err_t decode_os_err (unsigned long code)
 	const DWORD lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
 	const auto buf_len = FormatMessage(flags, NULL, code, lang, reinterpret_cast<WCHAR*>(&wbuf), 0, NULL);
 	if (wbuf && buf_len > 0) {
-		buf = create_text(wbuf);
+		buf = create_str(wbuf);
 		while (buf) {
 			const auto g = buf[buf.len - 1];
 			if (g == '.' || g == '\r' || g == '\n') {
@@ -82,7 +82,7 @@ err_t decode_os_err (unsigned long code)
 		}
 	} else {
 		assert_eq(GetLastError(), ERROR_MR_MID_NOT_FOUND);
-		buf = "System error code " + enc(code);
+		buf = "System error code " + as_text(static_cast<nat4_t>(code));
 	}
 	if (wbuf) {
 		LocalFree(wbuf);
@@ -90,16 +90,6 @@ err_t decode_os_err (unsigned long code)
 	return create_err(move(buf));
 }
 #endif
-
-err_t get_last_os_err ()
-{
-	#ifdef __unix__
-	return decode_os_err(errno);
-	#endif
-	#ifdef _WIN32
-	return decode_os_err(GetLastError());
-	#endif
-}
 
 [[noreturn]] void_t terminate_prog ()
 {
@@ -154,7 +144,7 @@ void_t display_err_msg (const str_t& title, const str_t& msg, err_t& err)
 		CONSOLE_SCREEN_BUFFER_INFO info = {};
 		GetConsoleScreenBufferInfo(term, &info);
 		SetConsoleTextAttribute(term, FOREGROUND_RED);
-		fprintf(stderr, "[%s]", create_strz(title).ptr);
+		fprintf(stderr, "[%s]", as_strz(title).ptr);
 		SetConsoleTextAttribute(term, info.wAttributes);
 		if (const auto stat = fprintf(stderr, "%s\r\n", as_strz(msg).ptr); stat < 0) {
 			err = create_err("Error printing to standard error stream");
@@ -201,7 +191,7 @@ void_t display_err_msg (const str_t& title, const str_t& msg, err_t& err)
 
 	#ifdef _WIN32
 	if (MessageBox(NULL, as_wstr(msg).ptr, as_wstr(title).ptr, MB_OK | MB_ICONERROR | MB_TASKMODAL) == 0) {
-		err = create_err("Displaying message box") + get_last_os_err();
+		err = create_err("Displaying message box") + decode_os_err(GetLastError());
 	}
 	#endif
 }

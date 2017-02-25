@@ -43,7 +43,7 @@ plat_t get_plat (const str_t& ver_str)
 	nat8_t old_at = 0;
 	for (auto i : create_range(sizeof(n) / sizeof(*n))) {
 		nat8_t new_at = old_at;
-		n[i] = clamp(decode_nat(ver_str, new_at), 0, max<nat2_t>());
+		n[i] = clamp(decode_nat(ver_str, &new_at), 0, max<nat2_t>());
 		if (new_at == old_at || new_at >= ver_str.len) {
 			break;
 		}
