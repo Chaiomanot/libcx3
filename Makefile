@@ -37,6 +37,9 @@ test: $(BUILD_DIR) $(BUILD_DIR)/lib $(OBJ_FILES_L) $(OBJ_FILES_W)
 
 run: test
 	./$(BUILD_DIR)/test
+runw: test
+	# Install wine-cellar to run this command
+	wine-cellar --arch 64 --copy ./$(BUILD_DIR)/test.exe
 
 # sudo apt install mingw-w64-x86-64-dev g++-mingw-w64-x86-64
 

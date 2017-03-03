@@ -1,6 +1,6 @@
 # libcx3
 
-An experimental C++17 standard library.
+An experimental alternative C++17 standard library.
 
 ## Summary
 
